@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+	<head>
+		<script src="scripts/sha1.js"></script>
+		<script src="scripts/oauth.js"></script>
+		<script src="scripts/operalink.js"></script>
+		<script src="scripts/debug.js"></script>
+		<script>
+			window.addEventListener('load', function() {
+				var tempToken = null;
+				var authorized = false;
+				
+				//opera.link.clearSavedToken();
+				//opera.link.storage.removeItem('compName');
+				
+				window.setInterval(function() {
+					if(authorized){
+						debug('update tabs');
+						var tabs = opera.extension.tabs.getAll();
+												
+						opera.link.notes.getAll(function(result) {
+							if (isError(result))
+								return;
+							var isMainContainer = false;
+							for (var i = 0; i < result.response.length; i++) {
+								if (result.response[i].properties.title == '_sync-tabs' 
+									&& result.response[i].item_type == 'note_folder') {
+									debug('in _sync-tabs folder');
+									isMainContainer = true;
+									var containerCreated = false;
+									var childs = result.response[i].children;
+									if (childs != null) {
+										for (var j = 0; j < childs.length; j++) {
+											var lines = childs[j].properties.content.split('\n');
+											if (lines.length > 0) {
+												if (lines[0] == opera.link.storage['compName'])	{
+													containerCreated = true;
+													var content = lines[0] + '\n';
+													debug ('computer container note found!');
+													for(var k = 0; k < tabs.length; k++) {
+														if (tabs[k].url != '') {
+															content += tabs[k].url + '\n';
+														}
+													}
+													opera.link.notes.update(childs[j].id, {content: content}, function(e) {
+														debug('tab list updated');
+													});
+												}
+											}
+										}
+									}
+									
+									if (!containerCreated) {
+										opera.link.notes.create({content: opera.link.storage['compName']}, result.response[i].id, function(data) {
+											debug('container created');
+										});
+									}
+									
+									break;
+								}
+							}
+							if (!isMainContainer) {
+								opera.link.notes.createFolder({title: '_sync-tabs'}, '', function(data){
+									debug('main container created');
+								});
+							}
+						});
+					}
+				}, 10000);
+				
+							
+				opera.link.consumer('I7okXUU5r18G6gciEPdfVK5TuMwQxUle', 'MjKroTXaGClpNaJxzAAxxSNIMUXeuqCt');
+				
+				var UIItemProperties = {
+					title: 'Sync open tabs',
+					icon: 'images/small-icon2.png',
+					popup: {
+						href: 'popup.html',
+						width: 330,
+						height: 400
+					}
+				};
+				
+				var button = opera.contexts.toolbar.createItem(UIItemProperties);
+				opera.contexts.toolbar.addItem(button);
+								
+			    if (opera.link.loadToken()) {
+					opera.link.testAuthorization(function(result) {
+						authorized = result;
+						debug('authorized ' + authorized);
+					});
+				}
+				else
+					debug('not authorized');
+					
+					
+				opera.extension.onmessage = function(e) {
+					switch(e.data.action) {
+						case 'request_token':
+							if (authorized) {
+								break;
+							}
+
+							if (tempToken) {
+								tempToken = null;
+							}
+
+							getRequestToken();
+							break;
+
+						case 'verifier':
+							if (tempToken) {
+								opera.link.getAccessToken(
+									tempToken.token, 
+									tempToken.secret, 
+									e.data.verifier, 
+									saveAccessToken, 
+									requestFailed);
+							}
+							break;
+						case 'openTab':
+							var url = e.data.url.split(';');
+							var tabs = [];
+							if (url.length == 0)
+							{
+								return;
+							}
+							
+							for (var i = 0; i < url.length - 1; i++)
+							{
+								tabs[i] = opera.extension.tabs.create({ url: url[i] });
+							}
+							var tabGroup = opera.extension.tabGroups.create(tabs, {collapsed: true});
+							break;
+					}
+				}
+				
+				function isError(result) {
+					if (result.status == opera.link.response.Unauthorized)
+						return true;
+					return false;
+				}
+				
+				function requestFailed(xhr) {
+					debug('error: ' + xhr.status + ' ' + xhr.statusText);
+				}
+
+				function getRequestToken() {
+					opera.link.requestToken(function(e) {
+						tempToken = {
+							token: e.token,
+							secret: e.secret
+						};
+						debug(tempToken.token);
+					}, requestFailed);
+				}
+
+				function saveAccessToken() {
+					debug('saving access token');
+					opera.link.saveToken();
+					tempToken = null;
+					authorized = true;
+
+					opera.extension.broadcastMessage({
+						action: 'authorized'
+					});
+				}
+			});
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

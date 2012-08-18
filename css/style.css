@@ -1,0 +1,64 @@
+button.button
+{
+	width: 70px; height: 25px;
+}
+
+#compName
+{
+	width:132px;
+}
+
+#getCodeBtn
+{
+	width: 303px;
+}
+
+#verify
+{
+width: 197px;
+}
+
+#verifyCode
+{
+	width: 124px;
+}
+	
+#openTabs
+{
+	width: 130px;
+}
+
+div.compName
+{
+width: 100px;
+}
+
+p
+{
+margin-top: 4px;
+margin-bottom: 5px;
+}
+
+p.tip
+{
+font-size:14px;
+}
+
+a.validation
+{
+color: red;
+font-weight: bold;
+cursor: pointer;
+display: none;
+}
+
+.copyleft a
+{
+
+}
+
+.copyleft a:hover
+{
+
+}
+

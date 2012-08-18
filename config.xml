@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" version="0.1">
+	<name>Sync open tabs</name>
+	<description>>Sync open tabs</description>
+	<author href="http://druss.pp.ua/sync-open-tabs">Ivan Derevyanko aka druss</author>
+	<icon src="images/big-icon.png" />
+	<!-- need this to connect to opera link -->
+	<access origin="https://auth.opera.com" />
+	<access origin="https://link.api.opera.com" />
+	<!-- need this to get favicons from any site -->
+	<access origin="*" />
+</widget>

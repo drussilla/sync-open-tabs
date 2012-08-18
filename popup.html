@@ -1,0 +1,168 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<script src="scripts/debug.js"></script>
+		<script src="scripts/sha1.js"></script>
+		<script src="scripts/oauth.js"></script>
+		<script src="scripts/operalink.js"></script>
+		<link type="text/css" rel="stylesheet" href="css/style.css">
+		<title>
+			Test
+		</title>
+	</head>	
+	<body>
+		<section id="auth" style="display: none;">
+			<h3>Sync Open Tabs Configurations</h3>
+			<p><u>To start using this extension:</u></p>
+			<p>Specify <b>Computer name: </b> <input type="text" onblur="saveCompName();" id="compName" />
+			<a title="Computer name can not be empty" class="validation" id="compNameValidation">*</a></p>
+			<p><button class="button" id="getCodeBtn" onclick="getCode();">Get Opera Link verifier code*</button></p>
+			<p class="tip"><b>* you need to reopen this window</b></p>
+			<p>Enter the code you have got </p>
+			<p><b>Opera Link verifier code: </b><input id="verifyCode" type=text>
+			<a title="Access code can not be empty" class="validation" id="verifyCodeValidation">*</a></p>
+			<p>When you finish - <button class="button" id="verify" onclick="verify();" >Save Configuration</button></p>
+		</section>
+		
+		<section id="main" style="display: none;">
+		<h3 style="display: inline;">This Computer: </h3><h3 style="display: inline;" id="hostname"></h3>
+		<p><u>Shared computers:</u></p>
+		<ul id="tablist"></ul>
+		</section>
+		
+		</p class="copyleft"><a href="http://druss.pp.ua/sync-open-tabs">Help</a>
+		
+		<script>
+			window.addEventListener('DOMContentLoaded', function() { 
+				debug('in DOMContentLoaded');
+				opera.link.consumer('I7okXUU5r18G6gciEPdfVK5TuMwQxUle', 'MjKroTXaGClpNaJxzAAxxSNIMUXeuqCt');
+				
+				checkLogin();
+				
+				opera.extension.onmessage = function (e) {
+					switch(e.data.action) {
+						case 'authorized':
+							checkLogin();
+							break;
+					}
+				}
+								
+			}, false);
+			
+			function saveCompName()	{
+				var compName = document.getElementById('compName');
+				opera.link.storage['compName'] = compName.value;
+			}
+			
+			function getCode() {
+				opera.extension.postMessage({ action: 'request_token'});
+			}
+			
+			function checkLogin() {
+				var authorized = false;
+				var authSection = document.getElementById('auth');
+				var mainSection = document.getElementById('main');
+				if (opera.link.loadToken()) {
+					opera.link.testAuthorization(function(result) {
+						authorized = result;
+						authSection.style.display = "none"; 
+						mainSection.style.display = "inline";
+						
+						var hostName = document.getElementById('hostname');
+						hostName.innerText = opera.link.storage['compName'];
+						
+						loadData();
+					});
+				}
+				else {
+					authSection.style.display = "inline"; 
+					if (opera.link.storage['compName'] != null)
+					{
+						var compName = document.getElementById('compName');
+						compName.value = opera.link.storage['compName'];
+					}
+					mainSection.style.display = "none";
+				}	
+			}
+			
+			function verify() {
+				var isValid = true;
+				var compName = document.getElementById('compName');
+				var compNameValidation = document.getElementById('compNameValidation');
+				if (compName.value == '') {
+					compNameValidation.style.display = "inline";
+					isValid = false;
+				}
+				else {
+					compNameValidation.style.display = "none";
+				}
+				
+				var verifyCodeValidation = document.getElementById('verifyCodeValidation');
+				if (verifyCode.value == '')	{
+					verifyCodeValidation.style.display = "inline";
+					isValid = false;
+				}
+				else {
+					verifyCodeValidation.style.display = "none";
+				}
+				
+				if (!isValid)
+					return;
+				
+				var code = document.getElementById('verifyCode');
+				debug('ver ' + code.value);
+				opera.extension.postMessage({action: "verifier", verifier: code.value });
+			}
+			
+			function isError(result) {
+				debug(result.status);
+				if (result.status == opera.link.response.Unauthorized)
+					return true;
+				return false;
+			}
+			
+			function loadData() {
+				var tabList = document.getElementById('tablist');
+				opera.link.notes.getAll(function(result) {
+					if (isError(result))
+						return;
+
+					for (var i = 0; i < result.response.length; i++) {
+						if (result.response[i].properties.title == '_sync-tabs'
+							&& result.response[i].item_type == 'note_folder') {
+							debug('in _sync-tabs');
+							var childs = result.response[i].children;
+							if (childs == null)
+								return;
+							
+							for (var j = 0; j < childs.length; j++) {
+								var urls = '';
+								var lines = childs[j].properties.content.split('\n');
+								var count = 0;
+								if (lines.length > 1) {
+									for (var k = 1; k < lines.length; k++) {
+										if (lines[k] != '')	{
+											debug('line: ' + lines[k]);
+											urls += lines[k] + ';';
+											count++;
+										}
+									}
+									tabList.innerHTML +=  '<li>'
+									+ lines[0] 
+									+ ' <a href="#" class="href" id="openTabs" onclick="openTabs(\'' + urls + '\')" >Open Tabs (' 
+									+ (count) 
+									+ ')</a>';
+									tabList.innerHTML +=  '</li>';
+								}
+							}
+						}
+					}
+				});
+			}
+			
+			function openTabs(urls) {
+				opera.extension.postMessage({ action: 'openTab', url: urls });
+			}
+		</script>
+	</body>
+</html>
