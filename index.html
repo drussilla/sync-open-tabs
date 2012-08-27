@@ -5,69 +5,24 @@
 		<script src="scripts/oauth.js"></script>
 		<script src="scripts/operalink.js"></script>
 		<script src="scripts/debug.js"></script>
+		<script src="scripts/common.js"></script>
 		<script>
 			window.addEventListener('load', function() {
 				var tempToken = null;
 				var authorized = false;
 				
+				// storage
+        		var storage = widget.preferences;
+
 				//opera.link.clearSavedToken();
-				//opera.link.storage.removeItem('compName');
+				//storage.removeItem('compName');
+
+				// update tabs timer
+				debug (storage["updateTimeout"]);
+				var updateTimer = window.setInterval(updateTabs, parseInt(storage["updateTimeout"]));
 				
-				window.setInterval(function() {
-					if(authorized){
-						debug('update tabs');
-						var tabs = opera.extension.tabs.getAll();
-												
-						opera.link.notes.getAll(function(result) {
-							if (isError(result))
-								return;
-							var isMainContainer = false;
-							for (var i = 0; i < result.response.length; i++) {
-								if (result.response[i].properties.title == '_sync-tabs' 
-									&& result.response[i].item_type == 'note_folder') {
-									debug('in _sync-tabs folder');
-									isMainContainer = true;
-									var containerCreated = false;
-									var childs = result.response[i].children;
-									if (childs != null) {
-										for (var j = 0; j < childs.length; j++) {
-											var lines = childs[j].properties.content.split('\n');
-											if (lines.length > 0) {
-												if (lines[0] == opera.link.storage['compName'])	{
-													containerCreated = true;
-													var content = lines[0] + '\n';
-													debug ('computer container note found!');
-													for(var k = 0; k < tabs.length; k++) {
-														if (tabs[k].url != '') {
-															content += tabs[k].url + '\n';
-														}
-													}
-													opera.link.notes.update(childs[j].id, {content: content}, function(e) {
-														debug('tab list updated');
-													});
-												}
-											}
-										}
-									}
-									
-									if (!containerCreated) {
-										opera.link.notes.create({content: opera.link.storage['compName']}, result.response[i].id, function(data) {
-											debug('container created');
-										});
-									}
-									
-									break;
-								}
-							}
-							if (!isMainContainer) {
-								opera.link.notes.createFolder({title: '_sync-tabs'}, '', function(data){
-									debug('main container created');
-								});
-							}
-						});
-					}
-				}, 10000);
-				
+				// listen to storage events
+        		addEventListener( 'storage', storageHandler, false );
 							
 				opera.link.consumer('I7okXUU5r18G6gciEPdfVK5TuMwQxUle', 'MjKroTXaGClpNaJxzAAxxSNIMUXeuqCt');
 				
@@ -134,11 +89,86 @@
 							break;
 					}
 				}
-				
-				function isError(result) {
-					if (result.status == opera.link.response.Unauthorized)
-						return true;
-					return false;
+
+				// listener for storage events
+		        function storageHandler(e) {
+		            // check if the storage effected is the widget.preferences
+		            if(e.storageArea !== widget.preferences)
+		            	return;
+
+		            debug("Widget preference changed. Key = " + e.key);
+		            // recreate update tabs timer when synchronization timeout changed
+		            if(e.key == 'updateTimeout') {
+		                window.clearInterval(updateTimer);
+						updateTimer = window.setInterval(updateTabs, parseInt(storage["updateTimeout"]));
+		            }
+		            // rename this computer
+		            else if (e.key == 'compName')
+		            {
+		            	// TODO: implement computer renaming.
+		            }
+		        }
+
+				function updateTabs() {
+					if(!authorized)
+					{
+						debug("Can not update tabs. Not authorized");
+						return;
+					}
+
+					debug('update tabs');
+					var tabs = opera.extension.tabs.getAll();
+											
+					opera.link.notes.getAll(function(result) {
+						
+						if (isError(result))
+							return;
+						
+						var isMainContainer = false;
+						for (var i = 0; i < result.response.length; i++) {
+							if (result.response[i].properties.title == '_sync-tabs' 
+								&& result.response[i].item_type == 'note_folder') {
+								debug('in _sync-tabs folder');
+								isMainContainer = true;
+								var containerCreated = false;
+								var childs = result.response[i].children;
+								if (childs != null) {
+									for (var j = 0; j < childs.length; j++) {
+										var lines = childs[j].properties.content.split('\n');
+										if (lines.length > 0) {
+											if (lines[0] == storage['compName'])	{
+												containerCreated = true;
+												var content = lines[0] + '\n';
+												debug ('computer container note found!');
+												for(var k = 0; k < tabs.length; k++) {
+													if (tabs[k].url != '') {
+														content += tabs[k].url + '\n';
+													}
+												}
+												opera.link.notes.update(childs[j].id, {content: content}, function(e) {
+													debug('tab list updated');
+												});
+											}
+										}
+									}
+								}
+								
+								if (!containerCreated) {
+									opera.link.notes.create({content: storage['compName']}, result.response[i].id, function(data) {
+										debug('computer container created');
+									});
+								}
+								
+								break;
+							}
+						}
+
+						if (!isMainContainer) {
+							opera.link.notes.createFolder({title: '_sync-tabs'}, '', function(data) {
+								debug('main container created');
+							});
+						}
+					});
 				}
 				
 				function requestFailed(xhr) {

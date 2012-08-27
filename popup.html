@@ -5,7 +5,11 @@
 		<script src="scripts/sha1.js"></script>
 		<script src="scripts/oauth.js"></script>
 		<script src="scripts/operalink.js"></script>
+		<script src="scripts/common.js"></script>
+		<script src="scripts/jquery-1.8.0.min.js"></script>
+		<script src="scripts/bootstrap.min.js"></script>
 		<link type="text/css" rel="stylesheet" href="css/style.css">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
 		<title>
 			Test
 		</title>
@@ -27,12 +31,18 @@
 		<section id="main" style="display: none;">
 		<h3 style="display: inline;">This Computer: </h3><h3 style="display: inline;" id="hostname"></h3>
 		<p><u>Shared computers:</u></p>
-		<ul id="tablist"></ul>
+		<img id="loading" style="display: none;" src="images/loading_icon.gif" />
+		<p id="linkError" style="display: none;">Can not connect ot Opera Link. Please try again later.</p>
+		<p id="firstTimeLoad" style="display: none;">It's a first launch.</p>
+		<div class="accordion" id="sharedComputers" style="display: none;"></div>
 		</section>
 		
 		</p class="copyleft"><a href="http://druss.pp.ua/sync-open-tabs">Help</a>
 		
 		<script>
+			// storage
+        	var storage = widget.preferences;
+
 			window.addEventListener('DOMContentLoaded', function() { 
 				debug('in DOMContentLoaded');
 				opera.link.consumer('I7okXUU5r18G6gciEPdfVK5TuMwQxUle', 'MjKroTXaGClpNaJxzAAxxSNIMUXeuqCt');
@@ -50,8 +60,7 @@
 			}, false);
 			
 			function saveCompName()	{
-				var compName = document.getElementById('compName');
-				opera.link.storage['compName'] = compName.value;
+				storage['compName'] = $('#compName').val();
 			}
 			
 			function getCode() {
@@ -69,17 +78,17 @@
 						mainSection.style.display = "inline";
 						
 						var hostName = document.getElementById('hostname');
-						hostName.innerText = opera.link.storage['compName'];
+						hostName.innerText = storage['compName'];
 						
 						loadData();
 					});
 				}
 				else {
 					authSection.style.display = "inline"; 
-					if (opera.link.storage['compName'] != null)
+					if (storage['compName'] != null)
 					{
 						var compName = document.getElementById('compName');
-						compName.value = opera.link.storage['compName'];
+						compName.value = storage['compName'];
 					}
 					mainSection.style.display = "none";
 				}	
@@ -114,26 +123,26 @@
 				opera.extension.postMessage({action: "verifier", verifier: code.value });
 			}
 			
-			function isError(result) {
-				debug(result.status);
-				if (result.status == opera.link.response.Unauthorized)
-					return true;
-				return false;
-			}
-			
 			function loadData() {
-				var tabList = document.getElementById('tablist');
+				$('#loading').show();
+				var tabList = document.getElementById('sharedComputers');
 				opera.link.notes.getAll(function(result) {
-					if (isError(result))
+					if (isError(result)) {
+						$('#loading').hide();
+						$('#linkError').show();
 						return;
-
+					}
+					var isCreated = false;
 					for (var i = 0; i < result.response.length; i++) {
 						if (result.response[i].properties.title == '_sync-tabs'
 							&& result.response[i].item_type == 'note_folder') {
 							debug('in _sync-tabs');
+							isCreated = true;
 							var childs = result.response[i].children;
-							if (childs == null)
+							if (childs == null) {
+								$('#firstTimeLoad').show();
 								return;
+							}
 							
 							for (var j = 0; j < childs.length; j++) {
 								var urls = '';
@@ -147,15 +156,30 @@
 											count++;
 										}
 									}
-									tabList.innerHTML +=  '<li>'
+									tabList.innerHTML +=  '<div class="accordion-group"><div class="accordion-heading" style="height:24px;"><a class="accordion-toggle" style="display: inline;" data-toggle="collapse" data-parent="#sharedComputers" href="#collapse' + j + '">'
 									+ lines[0] 
-									+ ' <a href="#" class="href" id="openTabs" onclick="openTabs(\'' + urls + '\')" >Open Tabs (' 
-									+ (count) 
-									+ ')</a>';
-									tabList.innerHTML +=  '</li>';
+									+ '</a><div class="pull-right"><div class="btn-group" style="display: inline;"><button class="btn btn-mini">Open all tabs</button><button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+						  <span class="caret"></span>
+						</button>
+					  	<ul class="dropdown-menu pull-right">
+		                  <li><a href="#">Open all tabs</a></li>
+		                  <li><a id="openTabs" onclick="openTabs(\'' + urls + '\')">Open all tabs in separate group</a></li>
+		                  <li class="divider"></li>
+		                  <li><a href="#"><i class="icon-trash"></i>Delete</a></li>
+	                	</ul>
+	              	</div>
+	              </div>
+	          </div><div id="collapse' + j + '" class="accordion-body collapse"><div class="accordion-inner">TODO: add list here';
+									tabList.innerHTML +=  '</div></div></div>';
 								}
 							}
 						}
+					}
+					debug ("data loading finished!");
+					$('#loading').hide();
+					
+					if (!isCreated) {
+						$('#firstTimeLoad').show();
 					}
 				});
 			}

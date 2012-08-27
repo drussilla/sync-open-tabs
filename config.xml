@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" version="0.1">
+<widget xmlns="http://www.w3.org/ns/widgets" version="0.2">
+	<preference name="updateTimeout" value="10000" />
 	<name>Sync open tabs</name>
-	<description>>Sync open tabs</description>
+	<description>Sync open tabs</description>
 	<author href="http://druss.pp.ua/sync-open-tabs">Ivan Derevyanko aka druss</author>
 	<icon src="images/big-icon.png" />
 	<!-- need this to connect to opera link -->
