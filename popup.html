@@ -31,9 +31,19 @@
 		<section id="main" style="display: none;">
 		<h3 style="display: inline;">This Computer: </h3><h3 style="display: inline;" id="hostname"></h3>
 		<p><u>Shared computers:</u></p>
-		<img id="loading" style="display: none;" src="images/loading_icon.gif" />
-		<p id="linkError" style="display: none;">Can not connect ot Opera Link. Please try again later.</p>
-		<p id="firstTimeLoad" style="display: none;">It's a first launch.</p>
+		<img id="loading" style="display: none;" align="center" src="images/loading_icon.gif" />
+		
+		<!-- Error alerts -->
+		<div id="linkError" class="alert alert-error" style="display: none;">
+ 			<strong>Error!</strong> Opera Link error. Please try again later.
+		</div>
+		<!-- End error alerts -->
+		
+		<!-- Info allerts -->
+		<div id="firstTimeLoad" class="alert alert-info" style="display: none;">
+ 			<strong>Information!</strong> You use this extension for the first time. It'll take one minute to create initial structure. Please reopen this window later.
+		</div>
+		<!-- End info alerts -->
 		<div class="accordion" id="sharedComputers" style="display: none;"></div>
 		</section>
 		
@@ -79,7 +89,7 @@
 						
 						var hostName = document.getElementById('hostname');
 						hostName.innerText = storage['compName'];
-						
+						debug("Ready for loading data.");
 						loadData();
 					});
 				}
@@ -132,6 +142,7 @@
 						$('#linkError').show();
 						return;
 					}
+					
 					var isCreated = false;
 					for (var i = 0; i < result.response.length; i++) {
 						if (result.response[i].properties.title == '_sync-tabs'
@@ -141,6 +152,7 @@
 							var childs = result.response[i].children;
 							if (childs == null) {
 								$('#firstTimeLoad').show();
+								$('#loading').hide();
 								return;
 							}
 							
@@ -156,20 +168,28 @@
 											count++;
 										}
 									}
-									tabList.innerHTML +=  '<div class="accordion-group"><div class="accordion-heading" style="height:24px;"><a class="accordion-toggle" style="display: inline;" data-toggle="collapse" data-parent="#sharedComputers" href="#collapse' + j + '">'
-									+ lines[0] 
-									+ '</a><div class="pull-right"><div class="btn-group" style="display: inline;"><button class="btn btn-mini">Open all tabs</button><button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
-						  <span class="caret"></span>
-						</button>
-					  	<ul class="dropdown-menu pull-right">
-		                  <li><a href="#">Open all tabs</a></li>
-		                  <li><a id="openTabs" onclick="openTabs(\'' + urls + '\')">Open all tabs in separate group</a></li>
-		                  <li class="divider"></li>
-		                  <li><a href="#"><i class="icon-trash"></i>Delete</a></li>
-	                	</ul>
-	              	</div>
-	              </div>
-	          </div><div id="collapse' + j + '" class="accordion-body collapse"><div class="accordion-inner">TODO: add list here';
+									tabList.innerHTML +=  '<div class="accordion-group">'
+										+ '<div class="accordion-heading" style="height:24px;">'
+											+ '<a class="accordion-toggle" style="display: inline;" data-toggle="collapse" data-parent="#sharedComputers" href="#collapse' + j + '">'
+												+ lines[0] 
+											+ '</a>'
+											+ '<div class="pull-right">'
+												+ '<div class="btn-group" style="display: inline;">'
+													+ '<button class="btn btn-mini">Open all tabs</button>'
+													+ '<button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">'
+						  								+ '<span class="caret"></span>'
+													+ '</button>'
+													+ '<ul class="dropdown-menu pull-right">'
+		                  								+ '<li><a href="#">Open all tabs</a></li>'
+		                  								+ '<li><a id="openTabs" onclick="openTabs(\'' + urls + '\')">Open all tabs in separate group</a></li>'
+		                  								+ '<li class="divider"></li>'
+											            + '<li><a href="#"><i class="icon-trash"></i>Delete</a></li>'
+	                								+ '</ul>'
+	              								+ '</div>'
+	              							+ '</div>'
+	          							+ '</div>'
+	          							+ '<div id="collapse' + j + '" class="accordion-body collapse">'
+	          								+ '<div class="accordion-inner">TODO: add list here';
 									tabList.innerHTML +=  '</div></div></div>';
 								}
 							}
