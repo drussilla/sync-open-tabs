@@ -74,19 +74,25 @@
 							}
 							break;
 						case 'openTab':
+							debug("open tabs:" + e.data.url);
 							var url = e.data.url.split(';');
+							var isGroup = e.data.isGroup;
 							var tabs = [];
-							if (url.length == 0)
-							{
+							debug (url.length);
+							if (url.length == 0) {
 								return;
 							}
 							
-							for (var i = 0; i < url.length - 1; i++)
-							{
+							for (var i = 0; i < url.length - 1; i++) {
 								tabs[i] = opera.extension.tabs.create({ url: url[i] });
 							}
-							var tabGroup = opera.extension.tabGroups.create(tabs, {collapsed: true});
+							if (isGroup) {
+								var tabGroup = opera.extension.tabGroups.create(tabs, {collapsed: true});
+							}
 							break;
+						case 'deleteFolder':
+							var item = e.data.item;
+							opera.link.notes.deleteItem(item, function(result) { debug('folder deleted');});
 					}
 				}
 

@@ -14,7 +14,7 @@
 			Test
 		</title>
 	</head>	
-	<body>
+	<body style="margin: 10px;">
 		<section id="auth" style="display: none;">
 			<h3>Sync Open Tabs Configurations</h3>
 			<p><u>To start using this extension:</u></p>
@@ -161,35 +161,38 @@
 								var lines = childs[j].properties.content.split('\n');
 								var count = 0;
 								if (lines.length > 1) {
+									var urlList = '<ul>';
 									for (var k = 1; k < lines.length; k++) {
 										if (lines[k] != '')	{
 											debug('line: ' + lines[k]);
 											urls += lines[k] + ';';
 											count++;
+											urlList += '<li><a href="#" onclick="openTab(\'' + lines[k] + '\')">' + lines[k] + "</a></li>";
 										}
 									}
+									urlList += '</ul>';
 									tabList.innerHTML +=  '<div class="accordion-group">'
-										+ '<div class="accordion-heading" style="height:24px;">'
-											+ '<a class="accordion-toggle" style="display: inline;" data-toggle="collapse" data-parent="#sharedComputers" href="#collapse' + j + '">'
+										+ '<div class="accordion-heading" style="height:30px;">'
+											+ '<a class="accordion-toggle" style="display: inline; position:relative; top:5px; left:0px;" data-toggle="collapse" data-parent="#sharedComputers" href="#collapse' + j + '" id="#collapse' + j + '"><i class="icon-plus" style="margin-right:5px;"></i>'
 												+ lines[0] 
 											+ '</a>'
 											+ '<div class="pull-right">'
 												+ '<div class="btn-group" style="display: inline;">'
-													+ '<button class="btn btn-mini">Open all tabs</button>'
+													+ '<button class="btn btn-mini" onclick="openTabs(\'' + urls + '\', false)">Open all </button>'
 													+ '<button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">'
 						  								+ '<span class="caret"></span>'
 													+ '</button>'
 													+ '<ul class="dropdown-menu pull-right">'
-		                  								+ '<li><a href="#">Open all tabs</a></li>'
-		                  								+ '<li><a id="openTabs" onclick="openTabs(\'' + urls + '\')">Open all tabs in separate group</a></li>'
+		                  								+ '<li><a href="#" onclick="openTabs(\'' + urls + '\', false)">Open all </a></li>'
+		                  								+ '<li><a href="#" id="openTabs" onclick="openTabs(\'' + urls + '\', true)">Open all in group</a></li>'
 		                  								+ '<li class="divider"></li>'
-											            + '<li><a href="#"><i class="icon-trash"></i>Delete</a></li>'
+											            + '<li><a href="#" onclick="deleteFolder(\'' + childs[j].id + '\', \'' + j + '\')"><i class="icon-trash"></i>Delete</a></li>'
 	                								+ '</ul>'
 	              								+ '</div>'
 	              							+ '</div>'
 	          							+ '</div>'
 	          							+ '<div id="collapse' + j + '" class="accordion-body collapse">'
-	          								+ '<div class="accordion-inner">TODO: add list here';
+	          								+ '<div class="accordion-inner">' + urlList;
 									tabList.innerHTML +=  '</div></div></div>';
 								}
 							}
@@ -197,15 +200,28 @@
 					}
 					debug ("data loading finished!");
 					$('#loading').hide();
+					$('#sharedComputers').show();
 					
 					if (!isCreated) {
 						$('#firstTimeLoad').show();
 					}
 				});
 			}
+
+			function openTab(url)
+			{
+				debug("opne url: " + url);
+				openTabs(url + ";", false);
+			}
+
+			function deleteFolder(item, num) {
+				opera.extension.postMessage({ action: 'deleteFolder', item: item });
+				debug('deleting folder' + num);
+				$('#collapse' + num).parent().remove();
+			}
 			
-			function openTabs(urls) {
-				opera.extension.postMessage({ action: 'openTab', url: urls });
+			function openTabs(urls, group) {
+				opera.extension.postMessage({ action: 'openTab', url: urls, isGroup: group });
 			}
 		</script>
 	</body>
