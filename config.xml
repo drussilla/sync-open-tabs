@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" id="https://addons.opera.com/extensions/details/sync-open-tabs/" version="0.3">
-	<preference name="updateTimeout" value="10000" />
+<widget xmlns="http://www.w3.org/ns/widgets" id="https://addons.opera.com/extensions/details/sync-open-tabs/" version="0.3.1">
 	<name>Sync open tabs</name>
 	<description>Sync open tabs</description>
 	<author href="http://druss.pp.ua/sync-open-tabs">Ivan Derevyanko aka druss</author>
@@ -10,4 +9,6 @@
 	<access origin="https://link.api.opera.com" />
 	<!-- need this to get favicons from any site -->
 	<access origin="*" />
+
+	<preference name="updateTimeout" value="10000" />
 </widget>
