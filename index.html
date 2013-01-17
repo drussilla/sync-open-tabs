@@ -18,11 +18,17 @@
 				//storage.removeItem('compName');
 
 				// update tabs timer
-				debug (storage["updateTimeout"]);
-				var updateTimer = window.setInterval(updateTabs, parseInt(storage["updateTimeout"]));
+				var timeout = parseInt(storage["updateTimeout"]);
+				if (timeout < 10000) {
+					timeout = 10000;
+				}
+
+				debug (timeout);
 				
+				var updateTimer = window.setInterval(updateTabs, timeout);
+
 				// listen to storage events
-        		addEventListener( 'storage', storageHandler, false );
+        		addEventListener('storage', storageHandler, false );
 							
 				opera.link.consumer('I7okXUU5r18G6gciEPdfVK5TuMwQxUle', 'MjKroTXaGClpNaJxzAAxxSNIMUXeuqCt');
 				
@@ -106,7 +112,12 @@
 		            // recreate update tabs timer when synchronization timeout changed
 		            if(e.key == 'updateTimeout') {
 		                window.clearInterval(updateTimer);
-						updateTimer = window.setInterval(updateTabs, parseInt(storage["updateTimeout"]));
+		                var timeout = parseInt(storage["updateTimeout"]);
+		                if (timeout < 10000) {
+		                	timeout = 10000;
+		                }
+
+						updateTimer = window.setInterval(updateTabs, timeout);
 		            }
 		            // rename this computer
 		            else if (e.key == 'compName')
